@@ -1,13 +1,19 @@
 package com.github.shyiko.ktlint.ruleset.standard
 
 import com.github.shyiko.ktlint.core.Rule
+import org.jetbrains.kotlin.KtNodeTypes.CALL_EXPRESSION
 import org.jetbrains.kotlin.com.intellij.lang.ASTNode
 import org.jetbrains.kotlin.com.intellij.lang.FileASTNode
 import org.jetbrains.kotlin.com.intellij.psi.PsiComment
+import org.jetbrains.kotlin.com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
+import org.jetbrains.kotlin.lexer.KtTokens.IDENTIFIER
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtPackageDirective
+import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespace
+import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
@@ -66,9 +72,40 @@ class MaxLineLengthRule : Rule("max-line-length"), Rule.Modifier.Last {
             rangeTree
                 .query(node.startOffset, node.startOffset + node.textLength)
                 .forEach { offset ->
-                    emit(offset, "Exceeded max line length ($maxLineLength)", false)
+                    emit(offset, "Exceeded max line length ($maxLineLength)", true)
+
+                    if (autoCorrect) {
+                        formatLine(node)
+                    }
                 }
         }
+    }
+
+    private fun formatLine(node: ASTNode) {
+        if (node is PsiWhiteSpace) {
+            if (node.treeNext.elementType == CALL_EXPRESSION) {
+                formatMethodCall(node)
+            }
+        }
+
+        if (node is LeafPsiElement) {
+            val nextSibling = node.getNextSiblingIgnoringWhitespace()
+
+            if (nextSibling is LeafPsiElement && nextSibling.elementType == IDENTIFIER) {
+                formatMethodDeclaration(nextSibling)
+            }
+        }
+    }
+
+    private fun formatMethodCall(node: ASTNode) {
+
+    }
+
+    private fun formatMethodDeclaration(node: LeafPsiElement) {
+        val parameterList = node.getNextSiblingIgnoringWhitespace() as KtParameterList
+        parameterList.parameters.forEach { param ->
+        }
+
     }
 }
 

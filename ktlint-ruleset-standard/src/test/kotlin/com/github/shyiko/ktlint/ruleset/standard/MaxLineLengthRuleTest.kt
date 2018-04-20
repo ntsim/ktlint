@@ -46,4 +46,9 @@ class MaxLineLengthRuleTest {
         assertThat(RangeTree((5 until 10).asSequence().toList()).query(10, 15).toString()).isEqualTo("[]")
         assertThat(RangeTree(listOf(1, 5, 10)).query(3, 4).toString()).isEqualTo("[]")
     }
+
+    @Test
+    fun testFormat() {
+        testFormatUsingResource(MaxLineLengthRule(), userData = mapOf("max_line_length" to "80"))
+    }
 }
